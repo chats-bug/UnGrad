@@ -57,7 +57,6 @@ class Tensor:
 			dependency.tensor.backward(Tensor(backward_grad))
 
 
-
 def tensor_sum(t: Tensor) -> Tensor:
 	"""
 	Takes a tensor and returns a 0-tensor
@@ -79,4 +78,42 @@ def tensor_sum(t: Tensor) -> Tensor:
 		
 	return Tensor(data, requires_grad, depends_on)
 
-	
+
+def add(t1: Tensor, t2: Tensor) -> Tensor:
+	data = t1.data + t2.data
+	requires_grad = t1.requires_grad or t2.requires_grad
+	depends_on: list[Dependency] = []
+
+	if t1.requires_grad:
+		def grad_fn1(grad: np.ndarray) -> np.ndarray:
+			# Handle broadcasting here
+			ndims_added = grad.ndim - t1.data.ndim
+			for _ in range(ndims_added):
+				grad = grad.sum(axis=0)
+
+			# Sum accross broadcasted but not added dims
+			for i, dim in enumerate(t1.shape):
+				if dim == 1:
+					grad = grad.sum(axis=i, keepdims=True)
+
+			return grad
+		
+		depends_on.append(Dependency(t1, grad_fn1))
+
+	if t2.requires_grad:
+		def grad_fn2(grad: np.ndarray) -> np.ndarray:
+			ndims_added = grad.ndim - t2.data.ndim
+			for _ in range(ndims_added):
+				grad = grad.sum(axis=0)
+			
+			# Sum accross broadcasted but not added dims
+			for i, dim in enumerate(t2.shape):
+				if dim == 1:
+					grad = grad.sum(axis=i, keepdims=True)
+			
+			return grad
+		
+		depends_on.append(Dependency(t2, grad_fn2))
+
+
+	return Tensor(data, requires_grad, depends_on) 
