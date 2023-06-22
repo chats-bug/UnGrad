@@ -10,8 +10,10 @@ class TestTensorAdd(unittest.TestCase):
 		t2 = Tensor(np.random.randint(0, 10, size=3), requires_grad=True)
 		w = np.random.randint(0, 10, size=3).tolist()
 
-		t3 = add(t1, t2)
+		t3 = t1 + t2
 		t3.backward(Tensor(w))
+
+		assert t3.data.tolist() == (t1.data + t2.data).tolist()
 
 		assert t1.grad.data.tolist() == w
 		assert t2.grad.data.tolist() == w
@@ -30,8 +32,10 @@ class TestTensorAdd(unittest.TestCase):
 		t2 = Tensor(np.random.randint(0, 10, size=3), requires_grad=True)
 		w = np.random.randint(0, 10, size=(2, 3)).tolist()
 
-		t3 = add(t1, t2)
+		t3 = t1 + t2
 		t3.backward(Tensor(w))
+
+		assert t3.data.tolist() == (t1.data + t2.data).tolist()
 
 		assert t1.grad.data.tolist() == w
 		assert t2.grad.data.tolist() == np.array(w).sum(axis=0).tolist()
@@ -44,8 +48,10 @@ class TestTensorAdd(unittest.TestCase):
 		t2 = Tensor(np.random.randint(0, 10, size=(1, 3)), requires_grad=True)
 		w = np.random.randint(0, 10, size=(2, 3)).tolist()
 
-		t3 = add(t1, t2)
+		t3 = t1 + t2
 		t3.backward(Tensor(w))
 
+		assert t3.data.tolist() == (t1.data + t2.data).tolist()
+		
 		assert t1.grad.data.tolist() == w
 		assert t2.grad.data.tolist() == np.array(w).sum(axis=0, keepdims=True).tolist()
