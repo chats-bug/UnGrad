@@ -91,6 +91,16 @@ class Tensor:
 		self.data = self.data - ensure_tensor(other).data
 		return self
 	
+	def __pow__(self, other: Union[int, float]) -> 'Tensor':
+		return pow(self, other)
+	
+	def __ipow__(self, other: Union[int, float]) -> 'Tensor':
+		self.data = self.data ** other
+		return self
+	
+	def __truediv__(self, other: 'Tensor') -> 'Tensor':
+		return self * (other ** -1)
+	
 	def __matmul__(self, other: 'Tensor') -> 'Tensor':
 		return matmul(self, other)
 	
@@ -236,6 +246,24 @@ def neg(t: Tensor) -> Tensor:
 
 def sub(t1: Tensor, t2: Tensor) -> Tensor:
 	return add(t1, neg(t2))
+
+
+def pow(t: Tensor, k: Union[int, float]):
+	# data = t.data ** k
+	# The above line will throw an error if t.data is not a float:-
+	# ValueError: Integers to negative integer powers are not allowed.
+	# To fix this, we do this
+	data = t.data.astype(float) ** k
+	requires_grad = t.requires_grad
+	depends_on = []
+
+	if requires_grad:
+		def grad_fn(grad: np.ndarray) -> np.ndarray:
+			return k * (t.data.astype(float) ** (k - 1)) * grad
+		
+		depends_on = [Dependency(t, grad_fn)]
+
+	return Tensor(data, requires_grad, depends_on)
 
 
 def matmul(t1: Tensor, t2: Tensor) -> Tensor:
